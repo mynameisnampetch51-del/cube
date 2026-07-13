@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>โครงข่ายลูกเต๋า — วาดแล้วพับเป็นสามมิติ</title>
+<style>
+  /* =====================================================================
+     Tokens — "Drafting table": graph-paper blue-grey ground, a technical
+     fold-line orange accent (echoes the dashed fold lines printed on real
+     paper cube nets), green for a correctly placed piece.
+     ===================================================================== */
+  :root {
+    --bg: #EEF2F6;
+    --surface: #FFFFFF;
+    --surface-2: #F6F9FB;
+    --ink: #1B2733;
+    --ink-muted: #5C6B7A;
+    --line: #D3DCE3;
+    --line-strong: #AEBCC8;
+
+    --accent: #E2672B;
+    --accent-strong: #C14E17;
+    --accent-soft: #FBE4D6;
+
+    --good: #2E9563;
+    --good-soft: #DFF3E8;
+    --good-ink: #1E6E48;
+
+    --shadow: 0 1px 2px rgba(27,39,51,.06), 0 10px 26px -14px rgba(27,39,51,.24);
+
+    --font-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+    --cell: 74px;
+    --cube: 190px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #10161C; --surface: #182029; --surface-2: #1D2731;
+      --ink: #E7EDF2; --ink-muted: #8FA0AF; --line: #2A3542; --line-strong: #3A4756;
+      --accent: #FF8A50; --accent-strong: #FFB088; --accent-soft: #3A2418;
+      --good: #4FCB92; --good-soft: #16362A; --good-ink: #8FE4BE;
+      --shadow: 0 1px 2px rgba(0,0,0,.45), 0 14px 32px -16px rgba(0,0,0,.65);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10161C; --surface: #182029; --surface-2: #1D2731;
+    --ink: #E7EDF2; --ink-muted: #8FA0AF; --line: #2A3542; --line-strong: #3A4756;
+    --accent: #FF8A50; --accent-strong: #FFB088; --accent-soft: #3A2418;
+    --good: #4FCB92; --good-soft: #16362A; --good-ink: #8FE4BE;
+    --shadow: 0 1px 2px rgba(0,0,0,.45), 0 14px 32px -16px rgba(0,0,0,.65);
+  }
+  :root[data-theme="light"] {
+    --bg: #EEF2F6; --surface: #FFFFFF; --surface-2: #F6F9FB;
+    --ink: #1B2733; --ink-muted: #5C6B7A; --line: #D3DCE3; --line-strong: #AEBCC8;
+    --accent: #E2672B; --accent-strong: #C14E17; --accent-soft: #FBE4D6;
+    --good: #2E9563; --good-soft: #DFF3E8; --good-ink: #1E6E48;
+    --shadow: 0 1px 2px rgba(27,39,51,.06), 0 10px 26px -14px rgba(27,39,51,.24);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    padding: 28px 20px 70px;
+    overflow-wrap: anywhere; /* Thai runs have no spaces; force a wrap point on narrow screens */
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  button { font: inherit; }
+  button:focus-visible, .tile:focus-visible {
+    outline: 2px solid var(--accent-strong);
+    outline-offset: 2px;
+  }
+
+  header.page-head h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 26px;
+    margin: 0 0 4px;
+    text-wrap: balance;
+  }
+  header.page-head p {
+    margin: 0;
+    color: var(--ink-muted);
+    font-size: 14px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 18px 20px;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 17px;
+    margin: 0 0 12px;
+  }
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin: 0 0 14px;
+  }
+
+  /* ---------- net grid geometry (shared look for example/slot/draw nets) ---------- */
+  .net-grid {
+    display: grid;
+    grid-template-columns: repeat(3, var(--cell));
+    grid-template-rows: repeat(4, var(--cell));
+    justify-content: center;
+  }
+  .net-cell-base {
+    border: 1px solid var(--line-strong);
+    margin: -1px 0 0 -1px; /* collapse shared borders so the net reads as one shape */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: var(--surface-2);
+  }
+
+  /* ============================= TOP: instructions ============================= */
+  .instructions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .instr-col { display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center; }
+  .instr-caption { font-size: 13px; color: var(--ink-muted); max-width: 30em; line-height: 1.5; }
+  .instr-caption b { color: var(--ink); font-weight: 600; }
+
+  .mini-net { transform: scale(0.62); transform-origin: top center; margin-bottom: -34px; }
+  .mini-net .net-cell-base.is-front::after {
+    content: "";
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+  }
+  .mini-net .net-cell-base.has-doodle svg { width: 60%; height: 60%; opacity: .85; }
+
+  .mini-cube-stage { perspective: 420px; }
+  .mini-cube {
+    width: 64px; height: 64px; position: relative;
+    transform-style: preserve-3d;
+    transform: rotateX(-20deg) rotateY(-32deg);
+    margin: 6px auto 0;
+  }
+  .mini-cube .mf {
+    position: absolute; inset: 0; width: 64px; height: 64px;
+    background: var(--surface-2);
+    border: 1px solid var(--line-strong);
+  }
+  .mini-cube .mf-front  { transform: translateZ(32px); }
+  .mini-cube .mf-back   { transform: rotateY(180deg) translateZ(32px); }
+  .mini-cube .mf-right  { transform: rotateY(90deg) translateZ(32px); }
+  .mini-cube .mf-left   { transform: rotateY(-90deg) translateZ(32px); }
+  .mini-cube .mf-top    { transform: rotateX(90deg) translateZ(32px); }
+  .mini-cube .mf-bottom { transform: rotateX(-90deg) translateZ(32px); }
+
+  /* ============================= MIDDLE: workspace ============================= */
+  .workspace {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: stretch;
+  }
+  .panel { display: flex; flex-direction: column; gap: 14px; }
+
+  /* --- Part 1: arrange --- */
+  .arrange-area { display: flex; flex-direction: column; gap: 16px; align-items: center; }
+  .slot {
+    border: 2px dashed var(--line-strong);
+    background: transparent;
+    transition: background-color .15s ease, border-color .15s ease;
+  }
+  .slot.drag-over { border-color: var(--accent); background: var(--accent-soft); }
+  .slot.placed { border-style: solid; }
+  .slot .placed-tile { width: 100%; height: 100%; }
+  .net-cell-base.is-fixed { background: var(--good-soft); color: var(--good-ink); }
+  .net-cell-base.is-fixed .face-glyph { opacity: .9; }
+
+  .tray {
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    min-height: calc(var(--cell) + 12px);
+    padding: 10px;
+    border-radius: 10px;
+    background: var(--surface-2);
+    width: 100%;
+  }
+  .tile {
+    width: var(--cell); height: var(--cell);
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    box-shadow: var(--shadow);
+    display: flex; align-items: center; justify-content: center;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    font-family: var(--font-display);
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .tile.dragging { cursor: grabbing; box-shadow: 0 10px 26px -8px rgba(0,0,0,.35); z-index: 50; }
+  .tile.placed-tile { box-shadow: none; border-radius: 0; }
+
+  .arrange-status {
+    font-size: 13px;
+    color: var(--ink-muted);
+    text-align: center;
+    min-height: 1.3em;
+  }
+  .arrange-status.solved { color: var(--good-ink); font-weight: 600; }
+
+  /* --- Part 2: draw --- */
+  .toolbar {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .tool-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .tool-btn.active { background: var(--accent); border-color: var(--accent-strong); color: #fff; }
+  .swatch-btn {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 0 1px var(--line-strong);
+    cursor: pointer; padding: 0;
+  }
+  .swatch-btn.active { box-shadow: 0 0 0 2px var(--accent-strong); }
+  .toolbar .sep { width: 1px; align-self: stretch; background: var(--line); margin: 0 2px; }
+  .toolbar label.size-label { font-size: 12px; color: var(--ink-muted); display: flex; align-items: center; gap: 6px; }
+
+  .draw-net { display: grid; grid-template-columns: repeat(3, var(--cell)); grid-template-rows: repeat(4, var(--cell)); justify-content: center; }
+  .draw-net .net-cell-base { padding: 0; overflow: hidden; }
+  .draw-net canvas { width: 100%; height: 100%; touch-action: none; display: block; }
+
+  /* ============================= BOTTOM: 3D stage ============================= */
+  .stage-section { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .stage3d-wrap { perspective: 900px; padding: 20px 0; }
+  .cube3d {
+    width: var(--cube); height: var(--cube);
+    position: relative;
+    transform-style: preserve-3d;
+    transform: rotateX(-18deg) rotateY(-30deg);
+    cursor: grab;
+    touch-action: none;
+  }
+  .cube3d.grabbing { cursor: grabbing; }
+  .face {
+    position: absolute; inset: 0;
+    width: var(--cube); height: var(--cube);
+    background: var(--surface-2);
+    border: 1px solid var(--line-strong);
+    backface-visibility: hidden;
+    overflow: hidden;
+  }
+  .face canvas { width: 100%; height: 100%; display: block; }
+  .face-front  { transform: translateZ(calc(var(--cube) / 2)); }
+  .face-back   { transform: rotateY(180deg) translateZ(calc(var(--cube) / 2)); }
+  .face-right  { transform: rotateY(90deg) translateZ(calc(var(--cube) / 2)); }
+  .face-left   { transform: rotateY(-90deg) translateZ(calc(var(--cube) / 2)); }
+  .face-top    { transform: rotateX(90deg) translateZ(calc(var(--cube) / 2)); }
+  .face-bottom { transform: rotateX(-90deg) translateZ(calc(var(--cube) / 2)); }
+
+  .reset-btn {
+    position: absolute;
+    right: 4px; bottom: 4px;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--accent-strong);
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 13.5px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .reset-btn:hover { background: var(--accent-strong); }
+  .stage-hint { font-size: 12.5px; color: var(--ink-muted); }
+
+  @media (max-width: 820px) {
+    .instructions, .workspace { grid-template-columns: 1fr; }
+    :root { --cell: 62px; --cube: 160px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-head">
+    <h1>โครงข่ายลูกเต๋า — วาดแล้วพับเป็นสามมิติ</h1>
+    <p>จัดเรียงโครงข่าย วาดลวดลาย แล้วดูผลลัพธ์เป็นลูกเต๋าสามมิติที่หมุนได้</p>
+  </header>
+
+  <!-- ============================= TOP: instructions ============================= -->
+  <section class="card instructions">
+    <div class="instr-col">
+      <div class="net-grid mini-net" id="exampleEmptyNet" aria-hidden="true"></div>
+      <p class="instr-caption"><b>ส่วนแรก</b> มีสี่เหลี่ยมห้ารูป ให้ผู้ใช้จัดเรียง แนวแบบในรูป</p>
+      <div class="mini-cube-stage" aria-hidden="true">
+        <div class="mini-cube">
+          <div class="mf mf-front"></div><div class="mf mf-back"></div>
+          <div class="mf mf-right"></div><div class="mf mf-left"></div>
+          <div class="mf mf-top"></div><div class="mf mf-bottom"></div>
+        </div>
+      </div>
+      <p class="instr-caption">นำรูปที่ได้มาทำเป็นลูกเต๋าสามมิติ สามารถหมุนได้</p>
+    </div>
+    <div class="instr-col">
+      <div class="net-grid mini-net" id="exampleDoodleNet" aria-hidden="true"></div>
+      <p class="instr-caption">ส่วนถัดมาให้คนวาดรูปลงไปเป็นรูปร่างต่างๆ</p>
+    </div>
+  </section>
+
+  <!-- ============================= MIDDLE: workspace ============================= -->
+  <section class="workspace">
+    <div class="card panel">
+      <div>
+        <h2>ส่วนที่ 1 — จัดเรียงโครงข่าย</h2>
+        <p class="section-label">ลากชิ้นส่วนไปวางให้ตรงตำแหน่ง</p>
+      </div>
+      <div class="arrange-area">
+        <div class="net-grid" id="slotGrid"></div>
+        <div class="tray" id="tileTray"></div>
+        <p class="arrange-status" id="arrangeStatus">ลากชิ้นส่วนทั้ง 5 ไปวางรอบช่องกลาง</p>
+      </div>
+    </div>
+
+    <div class="card panel">
+      <div>
+        <h2>ส่วนที่ 2 — วาดลงในโครงข่าย</h2>
+        <p class="section-label">วาดอิสระด้วยปากกา หรือลบด้วยยางลบ</p>
+      </div>
+      <div class="toolbar">
+        <button class="tool-btn active" id="penTool" type="button">✏️ ปากกา</button>
+        <button class="tool-btn" id="eraserTool" type="button">🧹 ยางลบ</button>
+        <span class="sep"></span>
+        <button class="swatch-btn active" data-color="#1B2733" style="background:#1B2733" title="ดำ" type="button"></button>
+        <button class="swatch-btn" data-color="#E2672B" style="background:#E2672B" title="ส้ม" type="button"></button>
+        <button class="swatch-btn" data-color="#2E7DD6" style="background:#2E7DD6" title="ฟ้า" type="button"></button>
+        <button class="swatch-btn" data-color="#2E9563" style="background:#2E9563" title="เขียว" type="button"></button>
+        <span class="sep"></span>
+        <label class="size-label">ขนาดหัวปากกา
+          <input type="range" id="brushSize" min="2" max="14" value="4">
+        </label>
+      </div>
+      <div class="net-grid draw-net" id="drawNet"></div>
+    </div>
+  </section>
+
+  <!-- ============================= BOTTOM: 3D stage ============================= -->
+  <section class="card stage-section">
+    <h2>โมเดลสามมิติ</h2>
+    <p class="stage-hint">ลากด้วยเมาส์หรือนิ้วเพื่อหมุนดูรอบด้าน</p>
+    <div class="stage3d-wrap">
+      <div class="cube3d" id="cube3d">
+        <div class="face face-front"><canvas data-face="front"></canvas></div>
+        <div class="face face-back"><canvas data-face="back"></canvas></div>
+        <div class="face face-right"><canvas data-face="right"></canvas></div>
+        <div class="face face-left"><canvas data-face="left"></canvas></div>
+        <div class="face face-top"><canvas data-face="top"></canvas></div>
+        <div class="face face-bottom"><canvas data-face="bottom"></canvas></div>
+      </div>
+    </div>
+    <button class="reset-btn" id="resetBtn" type="button">↺ รีเซ็ต</button>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* Shared net layout — single source of truth for Part 1 slots, Part 2
+     drawing cells, and the example illustrations. Row/col in a 3x4 grid. */
+  const FACES = [
+    { id: "top",    row: 0, col: 1 },
+    { id: "left",   row: 1, col: 0 },
+    { id: "front",  row: 1, col: 1, fixed: true },
+    { id: "right",  row: 1, col: 2 },
+    { id: "bottom", row: 2, col: 1 },
+    { id: "back",   row: 3, col: 1 },
+  ];
+  const LABELS = { top: "บน", bottom: "ล่าง", left: "ซ้าย", right: "ขวา", front: "หน้า", back: "หลัง" };
+
+  function placeInGrid(el, face) {
+    el.style.gridRowStart = face.row + 1;
+    el.style.gridColumnStart = face.col + 1;
+  }
+
+  /* ---------------------------------------------------------------------
+     Top instructions — static illustrative nets
+     --------------------------------------------------------------------- */
+  function buildExampleEmptyNet() {
+    const grid = document.getElementById("exampleEmptyNet");
+    FACES.forEach(face => {
+      const cell = document.createElement("div");
+      cell.className = "net-cell-base" + (face.fixed ? " is-front" : "");
+      placeInGrid(cell, face);
+      grid.appendChild(cell);
+    });
+  }
+
+  const DOODLES = {
+    top: '<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/>',
+    left: '<path d="M4 20 L12 4 L20 20 Z" fill="none" stroke="currentColor" stroke-width="2"/>',
+    front: '<path d="M12 4 L14.5 9.5 L20.5 10.2 L16 14.2 L17.3 20.1 L12 17 L6.7 20.1 L8 14.2 L3.5 10.2 L9.5 9.5 Z" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+    right: '<rect x="5" y="5" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"/>',
+    bottom: '<path d="M12 20c-4-3-8-6-8-10a4 4 0 0 1 8-1.5A4 4 0 0 1 20 10c0 4-4 7-8 10z" fill="none" stroke="currentColor" stroke-width="1.6"/>',
+    back: '<path d="M4 12 L20 12 M12 4 L12 20" stroke="currentColor" stroke-width="2"/>',
+  };
+  function buildExampleDoodleNet() {
+    const grid = document.getElementById("exampleDoodleNet");
+    FACES.forEach(face => {
+      const cell = document.createElement("div");
+      cell.className = "net-cell-base has-doodle";
+      placeInGrid(cell, face);
+      cell.innerHTML = `<svg viewBox="0 0 24 24">${DOODLES[face.id]}</svg>`;
+      grid.appendChild(cell);
+    });
+  }
+
+  /* ---------------------------------------------------------------------
+     Part 1 — arrange puzzle (Pointer Events drag & drop)
+     --------------------------------------------------------------------- */
+  function buildArrangePuzzle() {
+    const slotGrid = document.getElementById("slotGrid");
+    const tray = document.getElementById("tileTray");
+    const status = document.getElementById("arrangeStatus");
+    const movable = FACES.filter(f => !f.fixed);
+    const placedCount = { n: 0 };
+
+    // Fixed front cell + empty dashed slots
+    FACES.forEach(face => {
+      const cell = document.createElement("div");
+      placeInGrid(cell, face);
+      if (face.fixed) {
+        cell.className = "net-cell-base is-fixed";
+        cell.textContent = LABELS[face.id];
+      } else {
+        cell.className = "net-cell-base slot";
+        cell.dataset.face = face.id;
+        slotGrid.appendChild(cell);
+        return;
+      }
+      slotGrid.appendChild(cell);
+    });
+    const slots = Array.from(slotGrid.querySelectorAll(".slot"));
+
+    // Scrambled tray tiles
+    const shuffled = [...movable].sort(() => Math.random() - 0.5);
+    shuffled.forEach(face => {
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      tile.dataset.face = face.id;
+      tile.textContent = LABELS[face.id];
+      tile.tabIndex = 0;
+      tray.appendChild(tile);
+      wireTileDrag(tile);
+    });
+
+    function wireTileDrag(tile) {
+      let originParent = null, originNext = null;
+      let startX = 0, startY = 0, offsetX = 0, offsetY = 0;
+
+      tile.addEventListener("pointerdown", (e) => {
+        if (tile.classList.contains("locked")) return;
+        tile.setPointerCapture(e.pointerId);
+        const rect = tile.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        originParent = tile.parentElement;
+        originNext = tile.nextElementSibling;
+
+        tile.classList.add("dragging");
+        tile.style.position = "fixed";
+        tile.style.left = rect.left + "px";
+        tile.style.top = rect.top + "px";
+        tile.style.width = rect.width + "px";
+        tile.style.height = rect.height + "px";
+        document.body.appendChild(tile);
+
+        function move(ev) {
+          tile.style.left = (ev.clientX - offsetX) + "px";
+          tile.style.top = (ev.clientY - offsetY) + "px";
+          tile.style.pointerEvents = "none";
+          const under = document.elementFromPoint(ev.clientX, ev.clientY);
+          tile.style.pointerEvents = "";
+          slots.forEach(s => s.classList.remove("drag-over"));
+          const slotUnder = under && under.closest(".slot");
+          if (slotUnder && !slotUnder.classList.contains("placed")) slotUnder.classList.add("drag-over");
+        }
+
+        function up(ev) {
+          tile.removeEventListener("pointermove", move);
+          tile.removeEventListener("pointerup", up);
+          slots.forEach(s => s.classList.remove("drag-over"));
+
+          tile.style.pointerEvents = "none";
+          const under = document.elementFromPoint(ev.clientX, ev.clientY);
+          tile.style.pointerEvents = "";
+          const slotUnder = under && under.closest(".slot");
+
+          tile.classList.remove("dragging");
+          tile.style.position = "";
+          tile.style.left = tile.style.top = tile.style.width = tile.style.height = "";
+
+          if (slotUnder && !slotUnder.classList.contains("placed") && slotUnder.dataset.face === tile.dataset.face) {
+            slotUnder.appendChild(tile);
+            slotUnder.classList.add("placed");
+            tile.classList.add("placed-tile", "locked");
+            placedCount.n += 1;
+            if (placedCount.n === movable.length) {
+              status.textContent = "จัดเรียงถูกต้องครบทุกด้าน — นี่คือโครงข่ายของลูกเต๋า!";
+              status.classList.add("solved");
+            } else {
+              status.textContent = `วางถูกแล้ว ${placedCount.n}/${movable.length} ชิ้น`;
+            }
+          } else {
+            if (originNext) originParent.insertBefore(tile, originNext);
+            else originParent.appendChild(tile);
+          }
+        }
+
+        tile.addEventListener("pointermove", move);
+        tile.addEventListener("pointerup", up);
+      });
+    }
+  }
+
+  /* ---------------------------------------------------------------------
+     Part 2 — drawing net + live sync to the 3D cube
+     --------------------------------------------------------------------- */
+  const netCanvas = {};   // face -> drawing canvas (Part 2)
+  const netCtx = {};
+  const cubeCanvas = {};  // face -> cube-face canvas (bottom section)
+  const cubeCtx = {};
+  const dirtyFaces = new Set();
+
+  function setupCanvas(canvasEl, cssSize) {
+    // Backing-store resolution is fixed at build time; visual size instead
+    // tracks the container via CSS (100% width/height) so the --cell/--cube
+    // breakpoint change still resizes canvases correctly on narrow screens.
+    const dpr = window.devicePixelRatio || 1;
+    canvasEl.width = cssSize * dpr;
+    canvasEl.height = cssSize * dpr;
+    const ctx = canvasEl.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return ctx;
+  }
+
+  function buildDrawNet() {
+    const cellPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cell"));
+    const drawNet = document.getElementById("drawNet");
+    FACES.forEach(face => {
+      const cell = document.createElement("div");
+      cell.className = "net-cell-base";
+      placeInGrid(cell, face);
+      const canvas = document.createElement("canvas");
+      canvas.dataset.face = face.id;
+      cell.appendChild(canvas);
+      drawNet.appendChild(cell);
+      netCanvas[face.id] = canvas;
+      netCtx[face.id] = setupCanvas(canvas, cellPx);
+      wireDrawing(canvas, face.id);
+    });
+  }
+
+  function buildCubeFaces() {
+    const cubePx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cube"));
+    document.querySelectorAll(".face canvas").forEach(canvas => {
+      const face = canvas.dataset.face;
+      cubeCanvas[face] = canvas;
+      cubeCtx[face] = setupCanvas(canvas, cubePx);
+    });
+  }
+
+  let tool = "pen";
+  let color = "#1B2733";
+  let brushSize = 4;
+
+  function wireDrawing(canvas, face) {
+    const ctx = netCtx[face];
+    let drawing = false;
+
+    function pos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / (window.devicePixelRatio || 1) / rect.width;
+      const scaleY = canvas.height / (window.devicePixelRatio || 1) / rect.height;
+      return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+    }
+
+    canvas.addEventListener("pointerdown", (e) => {
+      canvas.setPointerCapture(e.pointerId);
+      drawing = true;
+      const p = pos(e);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+    });
+    canvas.addEventListener("pointermove", (e) => {
+      if (!drawing) return;
+      const p = pos(e);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = brushSize;
+      if (tool === "eraser") {
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.strokeStyle = "rgba(0,0,0,1)";
+      } else {
+        ctx.globalCompositeOperation = "source-over";
+        ctx.strokeStyle = color;
+      }
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      dirtyFaces.add(face);
+    });
+    function endStroke() {
+      if (!drawing) return;
+      drawing = false;
+      syncFace(face);
+    }
+    canvas.addEventListener("pointerup", endStroke);
+    canvas.addEventListener("pointercancel", endStroke);
+    canvas.addEventListener("pointerleave", () => { if (drawing) endStroke(); });
+  }
+
+  function syncFace(face) {
+    const dCtx = cubeCtx[face];
+    const dCanvas = cubeCanvas[face];
+    const dpr = window.devicePixelRatio || 1;
+    dCtx.save();
+    dCtx.setTransform(1, 0, 0, 1, 0, 0);
+    dCtx.clearRect(0, 0, dCanvas.width, dCanvas.height);
+    dCtx.restore();
+    dCtx.drawImage(netCanvas[face], 0, 0, dCanvas.width / dpr, dCanvas.height / dpr);
+  }
+
+  function syncLoop() {
+    if (dirtyFaces.size) {
+      dirtyFaces.forEach(syncFace);
+      dirtyFaces.clear();
+    }
+    requestAnimationFrame(syncLoop);
+  }
+
+  function wireToolbar() {
+    const penBtn = document.getElementById("penTool");
+    const eraserBtn = document.getElementById("eraserTool");
+    penBtn.addEventListener("click", () => {
+      tool = "pen"; penBtn.classList.add("active"); eraserBtn.classList.remove("active");
+    });
+    eraserBtn.addEventListener("click", () => {
+      tool = "eraser"; eraserBtn.classList.add("active"); penBtn.classList.remove("active");
+    });
+    document.querySelectorAll(".swatch-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        color = btn.dataset.color;
+        document.querySelectorAll(".swatch-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        tool = "pen"; penBtn.classList.add("active"); eraserBtn.classList.remove("active");
+      });
+    });
+    document.getElementById("brushSize").addEventListener("input", (e) => {
+      brushSize = Number(e.target.value);
+    });
+  }
+
+  /* ---------------------------------------------------------------------
+     3D cube — drag to rotate
+     --------------------------------------------------------------------- */
+  function wireCubeRotation() {
+    const cube = document.getElementById("cube3d");
+    let rotX = -18, rotY = -30;
+    let dragging = false, lastX = 0, lastY = 0;
+
+    cube.addEventListener("pointerdown", (e) => {
+      dragging = true;
+      cube.classList.add("grabbing");
+      cube.setPointerCapture(e.pointerId);
+      lastX = e.clientX; lastY = e.clientY;
+    });
+    cube.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - lastX, dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      rotY += dx * 0.4;
+      rotX -= dy * 0.4;
+      rotX = Math.max(-89, Math.min(89, rotX));
+      cube.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+    });
+    function stop() { dragging = false; cube.classList.remove("grabbing"); }
+    cube.addEventListener("pointerup", stop);
+    cube.addEventListener("pointercancel", stop);
+  }
+
+  /* ---------------------------------------------------------------------
+     Reset
+     --------------------------------------------------------------------- */
+  function wireReset() {
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      FACES.forEach(face => {
+        const dpr = window.devicePixelRatio || 1;
+        [netCtx[face.id], cubeCtx[face.id]].forEach((ctx, i) => {
+          const canvas = i === 0 ? netCanvas[face.id] : cubeCanvas[face.id];
+          ctx.save();
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.restore();
+        });
+      });
+    });
+  }
+
+  buildExampleEmptyNet();
+  buildExampleDoodleNet();
+  buildArrangePuzzle();
+  buildDrawNet();
+  buildCubeFaces();
+  wireToolbar();
+  wireCubeRotation();
+  wireReset();
+  syncLoop();
+})();
+</script>
+
+</body>
+</html>
