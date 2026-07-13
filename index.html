@@ -60,7 +60,12 @@
   }
 
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
+  html, body { margin: 0; padding: 0; max-width: 100%; overflow-x: hidden; }
+  /* Flex/grid items default to min-width:auto (their min-content size). For
+     unspaced Thai text runs the browser finds no break opportunity, so
+     min-content = the full string width — that silently defeats
+     overflow-wrap and forces horizontal overflow unless reset to 0 here. */
+  .wrap > *, .instr-col, .panel { min-width: 0; }
   body {
     background: var(--bg);
     color: var(--ink);
