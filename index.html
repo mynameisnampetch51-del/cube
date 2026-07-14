@@ -6,22 +6,21 @@
 <title>โครงข่ายลูกเต๋า — วาดแล้วพับเป็นสามมิติ</title>
 <style>
   /* =====================================================================
-     Tokens — "Drafting table": graph-paper blue-grey ground, a technical
-     fold-line orange accent (echoes the dashed fold lines printed on real
-     paper cube nets), green for a correctly placed piece.
+     Tokens — "Dice": white cube faces, bold red accent (a classic pip
+     red), green reserved as a distinct semantic "all placed" success cue.
      ===================================================================== */
   :root {
-    --bg: #EEF2F6;
+    --bg: #FFFFFF;
     --surface: #FFFFFF;
-    --surface-2: #F6F9FB;
-    --ink: #1B2733;
-    --ink-muted: #5C6B7A;
-    --line: #D3DCE3;
-    --line-strong: #AEBCC8;
+    --surface-2: #FFF3F3;
+    --ink: #201415;
+    --ink-muted: #8C6F70;
+    --line: #F3D9D9;
+    --line-strong: #E7B9B9;
 
-    --accent: #E2672B;
-    --accent-strong: #C14E17;
-    --accent-soft: #FBE4D6;
+    --accent: #D81E23;
+    --accent-strong: #A9151A;
+    --accent-soft: #FBD9D9;
 
     --good: #2E9563;
     --good-soft: #DFF3E8;
@@ -37,24 +36,24 @@
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #10161C; --surface: #182029; --surface-2: #1D2731;
-      --ink: #E7EDF2; --ink-muted: #8FA0AF; --line: #2A3542; --line-strong: #3A4756;
-      --accent: #FF8A50; --accent-strong: #FFB088; --accent-soft: #3A2418;
+      --bg: #150C0C; --surface: #1F1414; --surface-2: #261818;
+      --ink: #F5E9E9; --ink-muted: #B08C8C; --line: #3A2424; --line-strong: #4A2E2E;
+      --accent: #FF4B4F; --accent-strong: #FF7276; --accent-soft: #3D1A1A;
       --good: #4FCB92; --good-soft: #16362A; --good-ink: #8FE4BE;
       --shadow: 0 1px 2px rgba(0,0,0,.45), 0 14px 32px -16px rgba(0,0,0,.65);
     }
   }
   :root[data-theme="dark"] {
-    --bg: #10161C; --surface: #182029; --surface-2: #1D2731;
-    --ink: #E7EDF2; --ink-muted: #8FA0AF; --line: #2A3542; --line-strong: #3A4756;
-    --accent: #FF8A50; --accent-strong: #FFB088; --accent-soft: #3A2418;
+    --bg: #150C0C; --surface: #1F1414; --surface-2: #261818;
+    --ink: #F5E9E9; --ink-muted: #B08C8C; --line: #3A2424; --line-strong: #4A2E2E;
+    --accent: #FF4B4F; --accent-strong: #FF7276; --accent-soft: #3D1A1A;
     --good: #4FCB92; --good-soft: #16362A; --good-ink: #8FE4BE;
     --shadow: 0 1px 2px rgba(0,0,0,.45), 0 14px 32px -16px rgba(0,0,0,.65);
   }
   :root[data-theme="light"] {
-    --bg: #EEF2F6; --surface: #FFFFFF; --surface-2: #F6F9FB;
-    --ink: #1B2733; --ink-muted: #5C6B7A; --line: #D3DCE3; --line-strong: #AEBCC8;
-    --accent: #E2672B; --accent-strong: #C14E17; --accent-soft: #FBE4D6;
+    --bg: #FFFFFF; --surface: #FFFFFF; --surface-2: #FFF3F3;
+    --ink: #201415; --ink-muted: #8C6F70; --line: #F3D9D9; --line-strong: #E7B9B9;
+    --accent: #D81E23; --accent-strong: #A9151A; --accent-soft: #FBD9D9;
     --good: #2E9563; --good-soft: #DFF3E8; --good-ink: #1E6E48;
     --shadow: 0 1px 2px rgba(27,39,51,.06), 0 10px 26px -14px rgba(27,39,51,.24);
   }
@@ -65,7 +64,7 @@
      unspaced Thai text runs the browser finds no break opportunity, so
      min-content = the full string width — that silently defeats
      overflow-wrap and forces horizontal overflow unless reset to 0 here. */
-  .wrap > *, .instr-col, .panel { min-width: 0; }
+  .wrap > *, .step { min-width: 0; }
   body {
     background: var(--bg);
     color: var(--ink);
@@ -134,22 +133,8 @@
   }
 
   /* ============================= TOP: instructions ============================= */
-  .instructions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  .instr-col { display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center; }
-  .instr-caption { font-size: 13px; color: var(--ink-muted); max-width: 30em; line-height: 1.5; }
+  .instr-caption { font-size: 13px; color: var(--ink-muted); max-width: 30em; line-height: 1.5; text-align: center; }
   .instr-caption b { color: var(--ink); font-weight: 600; }
-
-  .mini-net { transform: scale(0.62); transform-origin: top center; margin-bottom: -34px; }
-  .mini-net .net-cell-base.is-front::after {
-    content: "";
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--accent);
-  }
-  .mini-net .net-cell-base.has-doodle svg { width: 60%; height: 60%; opacity: .85; }
 
   .mini-cube-stage { perspective: 420px; }
   .mini-cube {
@@ -170,27 +155,43 @@
   .mini-cube .mf-top    { transform: rotateX(90deg) translateZ(32px); }
   .mini-cube .mf-bottom { transform: rotateX(-90deg) translateZ(32px); }
 
-  /* ============================= MIDDLE: workspace ============================= */
-  .workspace {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    align-items: stretch;
-  }
-  .panel { display: flex; flex-direction: column; gap: 14px; }
+  /* ============================= step wizard ============================= */
+  .step { display: none; flex-direction: column; align-items: center; gap: 14px; }
+  .step.active { display: flex; }
+  .step > div:first-child { align-self: stretch; }
 
-  /* --- Part 1: arrange --- */
-  .arrange-area { display: flex; flex-direction: column; gap: 16px; align-items: center; }
+  .nav-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .nav-btn-primary {
+    border-color: var(--accent-strong);
+    background: var(--accent);
+    color: #fff;
+  }
+  .nav-btn-primary:hover { background: var(--accent-strong); }
+  .nav-btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+  .nav-btn:disabled:hover { background: var(--accent); }
+
+  /* ---------- Step 1: free-form layout picker ---------- */
+  .layout-area { display: flex; flex-direction: column; gap: 16px; align-items: center; }
   .slot {
     border: 2px dashed var(--line-strong);
     background: transparent;
     transition: background-color .15s ease, border-color .15s ease;
   }
   .slot.drag-over { border-color: var(--accent); background: var(--accent-soft); }
-  .slot.placed { border-style: solid; }
-  .slot .placed-tile { width: 100%; height: 100%; }
-  .net-cell-base.is-fixed { background: var(--good-soft); color: var(--good-ink); }
-  .net-cell-base.is-fixed .face-glyph { opacity: .9; }
+  .slot.occupied { border-style: solid; }
 
   .tray {
     display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
@@ -215,17 +216,16 @@
     color: var(--ink);
   }
   .tile.dragging { cursor: grabbing; box-shadow: 0 10px 26px -8px rgba(0,0,0,.35); z-index: 50; }
-  .tile.placed-tile { box-shadow: none; border-radius: 0; }
+  .tile.in-slot { box-shadow: none; border-radius: 0; width: 100%; height: 100%; }
 
-  .arrange-status {
+  .layout-status {
     font-size: 13px;
     color: var(--ink-muted);
     text-align: center;
     min-height: 1.3em;
   }
-  .arrange-status.solved { color: var(--good-ink); font-weight: 600; }
+  .layout-status.complete { color: var(--good-ink); font-weight: 600; }
 
-  /* --- Part 2: draw --- */
   .toolbar {
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   }
@@ -254,8 +254,7 @@
   .draw-net .net-cell-base { padding: 0; overflow: hidden; }
   .draw-net canvas { width: 100%; height: 100%; touch-action: none; display: block; }
 
-  /* ============================= BOTTOM: 3D stage ============================= */
-  .stage-section { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  /* ============================= STEP 2: 3D stage ============================= */
   .stage3d-wrap { perspective: 900px; padding: 20px 0; }
   .cube3d {
     width: var(--cube); height: var(--cube);
@@ -282,11 +281,10 @@
   .face-top    { transform: rotateX(90deg) translateZ(calc(var(--cube) / 2)); }
   .face-bottom { transform: rotateX(-90deg) translateZ(calc(var(--cube) / 2)); }
 
+  .stage-actions { display: flex; align-items: center; gap: 10px; }
   .reset-btn {
-    position: absolute;
-    right: 4px; bottom: 4px;
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 9px 16px;
+    padding: 10px 18px;
     border-radius: 999px;
     border: 1px solid var(--accent-strong);
     background: var(--accent);
@@ -294,13 +292,11 @@
     font-weight: 600;
     font-size: 13.5px;
     cursor: pointer;
-    box-shadow: var(--shadow);
   }
   .reset-btn:hover { background: var(--accent-strong); }
   .stage-hint { font-size: 12.5px; color: var(--ink-muted); }
 
   @media (max-width: 820px) {
-    .instructions, .workspace { grid-template-columns: 1fr; }
     :root { --cell: 62px; --cube: 160px; }
   }
 </style>
@@ -310,14 +306,15 @@
 
   <header class="page-head">
     <h1>โครงข่ายลูกเต๋า — วาดแล้วพับเป็นสามมิติ</h1>
-    <p>จัดเรียงโครงข่าย วาดลวดลาย แล้วดูผลลัพธ์เป็นลูกเต๋าสามมิติที่หมุนได้</p>
+    <p>วาดลวดลายลงในโครงข่าย แล้วดูผลลัพธ์เป็นลูกเต๋าสามมิติที่หมุนได้</p>
   </header>
 
-  <!-- ============================= TOP: instructions ============================= -->
-  <section class="card instructions">
-    <div class="instr-col">
-      <div class="net-grid mini-net" id="exampleEmptyNet" aria-hidden="true"></div>
-      <p class="instr-caption"><b>ส่วนแรก</b> มีสี่เหลี่ยมห้ารูป ให้ผู้ใช้จัดเรียง แนวแบบในรูป</p>
+  <!-- ============================= STEP 1: layout ============================= -->
+  <section class="card step active" id="stepLayout" data-step="1">
+    <div>
+      <p class="section-label">ขั้นที่ 1 จาก 3</p>
+      <h2>จัดวางโครงข่าย</h2>
+      <p class="instr-caption">ลากแต่ละด้านไปวางตำแหน่งที่ต้องการ จะวางแบบไหนก็ได้ ไม่มีผิดไม่มีถูก แล้วจะได้ลูกเต๋าสามมิติแบบนี้</p>
       <div class="mini-cube-stage" aria-hidden="true">
         <div class="mini-cube">
           <div class="mf mf-front"></div><div class="mf mf-back"></div>
@@ -325,54 +322,50 @@
           <div class="mf mf-top"></div><div class="mf mf-bottom"></div>
         </div>
       </div>
-      <p class="instr-caption">นำรูปที่ได้มาทำเป็นลูกเต๋าสามมิติ สามารถหมุนได้</p>
     </div>
-    <div class="instr-col">
-      <div class="net-grid mini-net" id="exampleDoodleNet" aria-hidden="true"></div>
-      <p class="instr-caption">ส่วนถัดมาให้คนวาดรูปลงไปเป็นรูปร่างต่างๆ</p>
+    <div class="layout-area">
+      <div class="net-grid" id="slotGrid"></div>
+      <div class="tray" id="tileTray"></div>
+      <p class="layout-status" id="layoutStatus">ลากชิ้นส่วนทั้ง 6 ไปวางตำแหน่งใดก็ได้ในตาราง</p>
+    </div>
+    <button class="nav-btn nav-btn-primary" id="toDrawBtn" type="button" disabled>ถัดไป: วาดลงในโครงข่าย →</button>
+  </section>
+
+  <!-- ============================= STEP 2: draw ============================= -->
+  <section class="card step" id="stepDraw" data-step="2">
+    <div>
+      <p class="section-label">ขั้นที่ 2 จาก 3</p>
+      <h2>วาดลงในโครงข่าย</h2>
+      <p class="section-label">วาดอิสระด้วยปากกา หรือลบด้วยยางลบ</p>
+    </div>
+    <div class="toolbar">
+      <button class="tool-btn active" id="penTool" type="button">✏️ ปากกา</button>
+      <button class="tool-btn" id="eraserTool" type="button">🧹 ยางลบ</button>
+      <span class="sep"></span>
+      <button class="swatch-btn active" data-color="#D33A2C" style="background:#D33A2C" title="แดง" type="button"></button>
+      <button class="swatch-btn" data-color="#1B2733" style="background:#1B2733" title="ดำ" type="button"></button>
+      <button class="swatch-btn" data-color="#E2672B" style="background:#E2672B" title="ส้ม" type="button"></button>
+      <button class="swatch-btn" data-color="#2E7DD6" style="background:#2E7DD6" title="ฟ้า" type="button"></button>
+      <button class="swatch-btn" data-color="#2E9563" style="background:#2E9563" title="เขียว" type="button"></button>
+      <span class="sep"></span>
+      <label class="size-label">ขนาดหัวปากกา
+        <input type="range" id="brushSize" min="2" max="14" value="4">
+      </label>
+    </div>
+    <div class="net-grid draw-net" id="drawNet"></div>
+    <div class="stage-actions">
+      <button class="nav-btn" id="toLayoutBtn" type="button">← กลับไปจัดตำแหน่ง</button>
+      <button class="nav-btn nav-btn-primary" id="toResultBtn" type="button">ดูผลลัพธ์ 3 มิติ →</button>
     </div>
   </section>
 
-  <!-- ============================= MIDDLE: workspace ============================= -->
-  <section class="workspace">
-    <div class="card panel">
-      <div>
-        <h2>ส่วนที่ 1 — จัดเรียงโครงข่าย</h2>
-        <p class="section-label">ลากชิ้นส่วนไปวางให้ตรงตำแหน่ง</p>
-      </div>
-      <div class="arrange-area">
-        <div class="net-grid" id="slotGrid"></div>
-        <div class="tray" id="tileTray"></div>
-        <p class="arrange-status" id="arrangeStatus">ลากชิ้นส่วนทั้ง 5 ไปวางรอบช่องกลาง</p>
-      </div>
+  <!-- ============================= STEP 3: 3D result ============================= -->
+  <section class="card step" id="stepResult" data-step="3">
+    <div>
+      <p class="section-label">ขั้นที่ 3 จาก 3</p>
+      <h2>โมเดลสามมิติ</h2>
+      <p class="stage-hint">ลากด้วยเมาส์หรือนิ้วเพื่อหมุนดูรอบด้าน</p>
     </div>
-
-    <div class="card panel">
-      <div>
-        <h2>ส่วนที่ 2 — วาดลงในโครงข่าย</h2>
-        <p class="section-label">วาดอิสระด้วยปากกา หรือลบด้วยยางลบ</p>
-      </div>
-      <div class="toolbar">
-        <button class="tool-btn active" id="penTool" type="button">✏️ ปากกา</button>
-        <button class="tool-btn" id="eraserTool" type="button">🧹 ยางลบ</button>
-        <span class="sep"></span>
-        <button class="swatch-btn active" data-color="#1B2733" style="background:#1B2733" title="ดำ" type="button"></button>
-        <button class="swatch-btn" data-color="#E2672B" style="background:#E2672B" title="ส้ม" type="button"></button>
-        <button class="swatch-btn" data-color="#2E7DD6" style="background:#2E7DD6" title="ฟ้า" type="button"></button>
-        <button class="swatch-btn" data-color="#2E9563" style="background:#2E9563" title="เขียว" type="button"></button>
-        <span class="sep"></span>
-        <label class="size-label">ขนาดหัวปากกา
-          <input type="range" id="brushSize" min="2" max="14" value="4">
-        </label>
-      </div>
-      <div class="net-grid draw-net" id="drawNet"></div>
-    </div>
-  </section>
-
-  <!-- ============================= BOTTOM: 3D stage ============================= -->
-  <section class="card stage-section">
-    <h2>โมเดลสามมิติ</h2>
-    <p class="stage-hint">ลากด้วยเมาส์หรือนิ้วเพื่อหมุนดูรอบด้าน</p>
     <div class="stage3d-wrap">
       <div class="cube3d" id="cube3d">
         <div class="face face-front"><canvas data-face="front"></canvas></div>
@@ -383,7 +376,10 @@
         <div class="face face-bottom"><canvas data-face="bottom"></canvas></div>
       </div>
     </div>
-    <button class="reset-btn" id="resetBtn" type="button">↺ รีเซ็ต</button>
+    <div class="stage-actions">
+      <button class="nav-btn" id="backToDrawBtn" type="button">← กลับไปวาดต่อ</button>
+      <button class="reset-btn" id="resetBtn" type="button">↺ รีเซ็ต</button>
+    </div>
   </section>
 
 </div>
@@ -392,17 +388,19 @@
 (function () {
   "use strict";
 
-  /* Shared net layout — single source of truth for Part 1 slots, Part 2
-     drawing cells, and the example illustrations. Row/col in a 3x4 grid. */
+  /* Shared net layout — single source of truth for the layout picker and
+     the drawing cells. Row/col (3x4 grid) start unset — Step 1 fills them
+     in from wherever the user drags each face. */
   const FACES = [
-    { id: "top",    row: 0, col: 1 },
-    { id: "left",   row: 1, col: 0 },
-    { id: "front",  row: 1, col: 1, fixed: true },
-    { id: "right",  row: 1, col: 2 },
-    { id: "bottom", row: 2, col: 1 },
-    { id: "back",   row: 3, col: 1 },
+    { id: "top",    row: null, col: null },
+    { id: "left",   row: null, col: null },
+    { id: "front",  row: null, col: null },
+    { id: "right",  row: null, col: null },
+    { id: "bottom", row: null, col: null },
+    { id: "back",   row: null, col: null },
   ];
   const LABELS = { top: "บน", bottom: "ล่าง", left: "ซ้าย", right: "ขวา", front: "หน้า", back: "หลัง" };
+  const GRID_ROWS = 4, GRID_COLS = 3;
 
   function placeInGrid(el, face) {
     el.style.gridRowStart = face.row + 1;
@@ -410,82 +408,57 @@
   }
 
   /* ---------------------------------------------------------------------
-     Top instructions — static illustrative nets
+     Step 1 — free-form layout picker (Pointer Events drag & drop)
+     No correctness check: any empty cell is a valid spot for any face,
+     and placed tiles stay draggable so the layout can be freely adjusted.
      --------------------------------------------------------------------- */
-  function buildExampleEmptyNet() {
-    const grid = document.getElementById("exampleEmptyNet");
-    FACES.forEach(face => {
-      const cell = document.createElement("div");
-      cell.className = "net-cell-base" + (face.fixed ? " is-front" : "");
-      placeInGrid(cell, face);
-      grid.appendChild(cell);
-    });
-  }
-
-  const DOODLES = {
-    top: '<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/>',
-    left: '<path d="M4 20 L12 4 L20 20 Z" fill="none" stroke="currentColor" stroke-width="2"/>',
-    front: '<path d="M12 4 L14.5 9.5 L20.5 10.2 L16 14.2 L17.3 20.1 L12 17 L6.7 20.1 L8 14.2 L3.5 10.2 L9.5 9.5 Z" fill="none" stroke="currentColor" stroke-width="1.6"/>',
-    right: '<rect x="5" y="5" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"/>',
-    bottom: '<path d="M12 20c-4-3-8-6-8-10a4 4 0 0 1 8-1.5A4 4 0 0 1 20 10c0 4-4 7-8 10z" fill="none" stroke="currentColor" stroke-width="1.6"/>',
-    back: '<path d="M4 12 L20 12 M12 4 L12 20" stroke="currentColor" stroke-width="2"/>',
-  };
-  function buildExampleDoodleNet() {
-    const grid = document.getElementById("exampleDoodleNet");
-    FACES.forEach(face => {
-      const cell = document.createElement("div");
-      cell.className = "net-cell-base has-doodle";
-      placeInGrid(cell, face);
-      cell.innerHTML = `<svg viewBox="0 0 24 24">${DOODLES[face.id]}</svg>`;
-      grid.appendChild(cell);
-    });
-  }
-
-  /* ---------------------------------------------------------------------
-     Part 1 — arrange puzzle (Pointer Events drag & drop)
-     --------------------------------------------------------------------- */
-  function buildArrangePuzzle() {
+  function buildLayoutPicker() {
     const slotGrid = document.getElementById("slotGrid");
     const tray = document.getElementById("tileTray");
-    const status = document.getElementById("arrangeStatus");
-    const movable = FACES.filter(f => !f.fixed);
-    const placedCount = { n: 0 };
+    const status = document.getElementById("layoutStatus");
+    const nextBtn = document.getElementById("toDrawBtn");
+    const cellOccupant = {}; // "row-col" -> faceId | undefined
 
-    // Fixed front cell + empty dashed slots
-    FACES.forEach(face => {
-      const cell = document.createElement("div");
-      placeInGrid(cell, face);
-      if (face.fixed) {
-        cell.className = "net-cell-base is-fixed";
-        cell.textContent = LABELS[face.id];
-      } else {
+    for (let r = 0; r < GRID_ROWS; r++) {
+      for (let c = 0; c < GRID_COLS; c++) {
+        const cell = document.createElement("div");
         cell.className = "net-cell-base slot";
-        cell.dataset.face = face.id;
+        cell.dataset.row = r;
+        cell.dataset.col = c;
+        cell.style.gridRowStart = r + 1;
+        cell.style.gridColumnStart = c + 1;
         slotGrid.appendChild(cell);
-        return;
       }
-      slotGrid.appendChild(cell);
-    });
+    }
     const slots = Array.from(slotGrid.querySelectorAll(".slot"));
+    const slotAt = (r, c) => slots.find(s => Number(s.dataset.row) === r && Number(s.dataset.col) === c);
 
-    // Scrambled tray tiles
-    const shuffled = [...movable].sort(() => Math.random() - 0.5);
-    shuffled.forEach(face => {
+    function updateStatus() {
+      const placed = FACES.filter(f => f.row !== null).length;
+      if (placed === FACES.length) {
+        status.textContent = "จัดวางครบทั้ง 6 ด้านแล้ว พร้อมวาดต่อได้เลย!";
+        status.classList.add("complete");
+      } else {
+        status.textContent = `วางแล้ว ${placed}/${FACES.length} ด้าน — ลากที่เหลือไปวางตำแหน่งใดก็ได้`;
+        status.classList.remove("complete");
+      }
+      nextBtn.disabled = placed !== FACES.length;
+    }
+
+    FACES.forEach(face => {
       const tile = document.createElement("div");
       tile.className = "tile";
       tile.dataset.face = face.id;
       tile.textContent = LABELS[face.id];
       tile.tabIndex = 0;
       tray.appendChild(tile);
-      wireTileDrag(tile);
+      wireTileDrag(tile, face);
     });
 
-    function wireTileDrag(tile) {
-      let originParent = null, originNext = null;
-      let startX = 0, startY = 0, offsetX = 0, offsetY = 0;
+    function wireTileDrag(tile, face) {
+      let originParent = null, originNext = null, offsetX = 0, offsetY = 0;
 
       tile.addEventListener("pointerdown", (e) => {
-        if (tile.classList.contains("locked")) return;
         tile.setPointerCapture(e.pointerId);
         const rect = tile.getBoundingClientRect();
         offsetX = e.clientX - rect.left;
@@ -493,13 +466,21 @@
         originParent = tile.parentElement;
         originNext = tile.nextElementSibling;
 
+        // Freeing the tile's current cell (if any) happens only on a
+        // successful drop elsewhere — not here — so dropping back onto
+        // the same cell it came from is a no-op, not a self-collision.
+
+        // Stay in the current parent (tray or slot) instead of reparenting
+        // to <body> — reparenting mid-drag was found to silently break
+        // setPointerCapture, so later pointermove/up would hit whatever's
+        // underneath instead of the tile. `position:fixed` alone already
+        // floats it above everything relative to the viewport.
         tile.classList.add("dragging");
         tile.style.position = "fixed";
         tile.style.left = rect.left + "px";
         tile.style.top = rect.top + "px";
         tile.style.width = rect.width + "px";
         tile.style.height = rect.height + "px";
-        document.body.appendChild(tile);
 
         function move(ev) {
           tile.style.left = (ev.clientX - offsetX) + "px";
@@ -509,7 +490,7 @@
           tile.style.pointerEvents = "";
           slots.forEach(s => s.classList.remove("drag-over"));
           const slotUnder = under && under.closest(".slot");
-          if (slotUnder && !slotUnder.classList.contains("placed")) slotUnder.classList.add("drag-over");
+          if (slotUnder) slotUnder.classList.add("drag-over");
         }
 
         function up(ev) {
@@ -526,35 +507,44 @@
           tile.style.position = "";
           tile.style.left = tile.style.top = tile.style.width = tile.style.height = "";
 
-          if (slotUnder && !slotUnder.classList.contains("placed") && slotUnder.dataset.face === tile.dataset.face) {
+          const key = slotUnder ? `${slotUnder.dataset.row}-${slotUnder.dataset.col}` : null;
+          const freeToDrop = slotUnder && (cellOccupant[key] === undefined || cellOccupant[key] === face.id);
+
+          if (freeToDrop) {
+            // Free whichever cell this face previously occupied.
+            if (face.row !== null) delete cellOccupant[`${face.row}-${face.col}`];
+            cellOccupant[key] = face.id;
+            face.row = Number(slotUnder.dataset.row);
+            face.col = Number(slotUnder.dataset.col);
+            slotUnder.classList.add("occupied");
             slotUnder.appendChild(tile);
-            slotUnder.classList.add("placed");
-            tile.classList.add("placed-tile", "locked");
-            placedCount.n += 1;
-            if (placedCount.n === movable.length) {
-              status.textContent = "จัดเรียงถูกต้องครบทุกด้าน — นี่คือโครงข่ายของลูกเต๋า!";
-              status.classList.add("solved");
-            } else {
-              status.textContent = `วางถูกแล้ว ${placedCount.n}/${movable.length} ชิ้น`;
-            }
+            tile.classList.add("in-slot");
+            // The old slot (if different) is now empty again.
+            slots.forEach(s => {
+              const sKey = `${s.dataset.row}-${s.dataset.col}`;
+              if (s !== slotUnder && cellOccupant[sKey] === undefined) s.classList.remove("occupied");
+            });
           } else {
             if (originNext) originParent.insertBefore(tile, originNext);
             else originParent.appendChild(tile);
           }
+          updateStatus();
         }
 
         tile.addEventListener("pointermove", move);
         tile.addEventListener("pointerup", up);
       });
     }
+
+    updateStatus();
   }
 
   /* ---------------------------------------------------------------------
-     Part 2 — drawing net + live sync to the 3D cube
+     Drawing net + live sync to the 3D cube
      --------------------------------------------------------------------- */
-  const netCanvas = {};   // face -> drawing canvas (Part 2)
+  const netCanvas = {};   // face -> drawing canvas (step 1)
   const netCtx = {};
-  const cubeCanvas = {};  // face -> cube-face canvas (bottom section)
+  const cubeCanvas = {};  // face -> cube-face canvas (step 2)
   const cubeCtx = {};
   const dirtyFaces = new Set();
 
@@ -571,8 +561,14 @@
   }
 
   function buildDrawNet() {
-    const cellPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cell"));
+    // Rebuildable: re-entering this from Step 1 after adjusting the layout
+    // should reflect the new positions, so clear any previous cells/state.
     const drawNet = document.getElementById("drawNet");
+    drawNet.innerHTML = "";
+    Object.keys(netCanvas).forEach(k => { delete netCanvas[k]; delete netCtx[k]; });
+    dirtyFaces.clear();
+
+    const cellPx = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cell"));
     FACES.forEach(face => {
       const cell = document.createElement("div");
       cell.className = "net-cell-base";
@@ -597,7 +593,7 @@
   }
 
   let tool = "pen";
-  let color = "#1B2733";
+  let color = "#D33A2C";
   let brushSize = 4;
 
   function wireDrawing(canvas, face) {
@@ -732,14 +728,33 @@
     });
   }
 
-  buildExampleEmptyNet();
-  buildExampleDoodleNet();
-  buildArrangePuzzle();
-  buildDrawNet();
-  buildCubeFaces();
+  /* ---------------------------------------------------------------------
+     Step wizard — layout, then draw, then reveal the 3D result
+     --------------------------------------------------------------------- */
+  function wireSteps() {
+    const stepLayout = document.getElementById("stepLayout");
+    const stepDraw = document.getElementById("stepDraw");
+    const stepResult = document.getElementById("stepResult");
+    function goToStep(n) {
+      stepLayout.classList.toggle("active", n === 1);
+      stepDraw.classList.toggle("active", n === 2);
+      stepResult.classList.toggle("active", n === 3);
+    }
+    document.getElementById("toDrawBtn").addEventListener("click", () => {
+      buildDrawNet();
+      buildCubeFaces();
+      goToStep(2);
+    });
+    document.getElementById("toLayoutBtn").addEventListener("click", () => goToStep(1));
+    document.getElementById("toResultBtn").addEventListener("click", () => goToStep(3));
+    document.getElementById("backToDrawBtn").addEventListener("click", () => goToStep(2));
+  }
+
+  buildLayoutPicker();
   wireToolbar();
   wireCubeRotation();
   wireReset();
+  wireSteps();
   syncLoop();
 })();
 </script>
