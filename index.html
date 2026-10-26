@@ -6,56 +6,56 @@
 <title>โครงข่ายลูกเต๋า — วาดแล้วพับเป็นสามมิติ</title>
 <style>
   /* =====================================================================
-     Tokens — "Dice": white cube faces, bold red accent (a classic pip
-     red), green reserved as a distinct semantic "all placed" success cue.
+     Tokens — "Dice, restyled": the accent ladder applied to the project's
+     own hue (pip red) instead of the dealt raspberry. Full --accent only
+     on small marks (the primary button, the current step, the active
+     swatch ring); its pale tints (--surface-2/-3, --accent-soft) carry
+     every area. Green stays the one borrowed hue, reserved for "all six
+     placed" — never mixed with the red ladder.
      ===================================================================== */
   :root {
-    --bg: #FFFFFF;
+    --bg: #F4FBFA;
     --surface: #FFFFFF;
-    --surface-2: #FFF3F3;
-    --ink: #201415;
-    --ink-muted: #8C6F70;
-    --line: #F3D9D9;
-    --line-strong: #E7B9B9;
+    --surface-2: #E3F3F1;
+    --surface-3: #CFEAE6;
+    --ink: #10201E;
+    --ink-muted: #4C6965;
+    --line: #D3EAE7;
+    --line-strong: #8FC9BE;
 
-    --accent: #D81E23;
-    --accent-strong: #A9151A;
-    --accent-soft: #FBD9D9;
+    --accent: #0B6E66;
+    --accent-strong: #084F49;
+    --accent-soft: #D7F0EC;
+    --accent-ink: #0B5A54;
+    --on-accent: #FFFFFF;
 
-    --good: #2E9563;
+    --good: #2E8B57;
     --good-soft: #DFF3E8;
-    --good-ink: #1E6E48;
-
-    --shadow: 0 1px 2px rgba(27,39,51,.06), 0 10px 26px -14px rgba(27,39,51,.24);
+    --good-ink: #1F6B42;
 
     --font-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
     --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
-    --cell: 74px;
-    --cube: 190px;
+    --cell: 82px;
+    --cube: 240px;
+    --radius: 16px;
+    --radius-sm: 10px;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #150C0C; --surface: #1F1414; --surface-2: #261818;
-      --ink: #F5E9E9; --ink-muted: #B08C8C; --line: #3A2424; --line-strong: #4A2E2E;
-      --accent: #FF4B4F; --accent-strong: #FF7276; --accent-soft: #3D1A1A;
-      --good: #4FCB92; --good-soft: #16362A; --good-ink: #8FE4BE;
-      --shadow: 0 1px 2px rgba(0,0,0,.45), 0 14px 32px -16px rgba(0,0,0,.65);
-    }
-  }
+  /* Light is the default regardless of system preference; dark is opt-in
+     only via data-theme="dark" (no auto prefers-color-scheme switch). */
   :root[data-theme="dark"] {
-    --bg: #150C0C; --surface: #1F1414; --surface-2: #261818;
-    --ink: #F5E9E9; --ink-muted: #B08C8C; --line: #3A2424; --line-strong: #4A2E2E;
-    --accent: #FF4B4F; --accent-strong: #FF7276; --accent-soft: #3D1A1A;
-    --good: #4FCB92; --good-soft: #16362A; --good-ink: #8FE4BE;
-    --shadow: 0 1px 2px rgba(0,0,0,.45), 0 14px 32px -16px rgba(0,0,0,.65);
+    --bg: #081312; --surface: #0F2320; --surface-2: #16332E; --surface-3: #1E433C;
+    --ink: #E7F5F2; --ink-muted: #8FB3AC; --line: #234944; --line-strong: #2E5F58;
+    --accent: #2DD4BF; --accent-strong: #5EEAD4; --accent-soft: #123A35; --accent-ink: #6FE8D8;
+    --on-accent: #04201D;
+    --good: #4ADE80; --good-soft: #163826; --good-ink: #86EFAC;
   }
   :root[data-theme="light"] {
-    --bg: #FFFFFF; --surface: #FFFFFF; --surface-2: #FFF3F3;
-    --ink: #201415; --ink-muted: #8C6F70; --line: #F3D9D9; --line-strong: #E7B9B9;
-    --accent: #D81E23; --accent-strong: #A9151A; --accent-soft: #FBD9D9;
-    --good: #2E9563; --good-soft: #DFF3E8; --good-ink: #1E6E48;
-    --shadow: 0 1px 2px rgba(27,39,51,.06), 0 10px 26px -14px rgba(27,39,51,.24);
+    --bg: #F4FBFA; --surface: #FFFFFF; --surface-2: #E3F3F1; --surface-3: #CFEAE6;
+    --ink: #10201E; --ink-muted: #4C6965; --line: #D3EAE7; --line-strong: #8FC9BE;
+    --accent: #0B6E66; --accent-strong: #084F49; --accent-soft: #D7F0EC; --accent-ink: #0B5A54;
+    --on-accent: #FFFFFF;
+    --good: #2E8B57; --good-soft: #DFF3E8; --good-ink: #1F6B42;
   }
 
   * { box-sizing: border-box; }
@@ -64,58 +64,73 @@
      unspaced Thai text runs the browser finds no break opportunity, so
      min-content = the full string width — that silently defeats
      overflow-wrap and forces horizontal overflow unless reset to 0 here. */
-  .wrap > *, .step { min-width: 0; }
+  .wrap > *, .step-grid > * { min-width: 0; }
   body {
     background: var(--bg);
     color: var(--ink);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
-    padding: 28px 20px 70px;
+    padding: 48px 28px 96px;
     overflow-wrap: anywhere; /* Thai runs have no spaces; force a wrap point on narrow screens */
   }
-  .wrap { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  .wrap { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
   button { font: inherit; }
   button:focus-visible, .tile:focus-visible {
-    outline: 2px solid var(--accent-strong);
-    outline-offset: 2px;
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 4px;
   }
 
+  /* ============================= header ============================= */
   header.page-head h1 {
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 26px;
-    margin: 0 0 4px;
+    font-size: clamp(20px, 2.2vw, 26px);
+    letter-spacing: -0.01em;
+    line-height: 1.12;
+    margin: 0 0 10px;
     text-wrap: balance;
+    max-width: 16ch;
   }
   header.page-head p {
     margin: 0;
     color: var(--ink-muted);
-    font-size: 14px;
+    font-size: 15px;
+    line-height: 1.55;
+    max-width: 42ch;
   }
 
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    box-shadow: var(--shadow);
-    padding: 18px 20px;
+  /* ============================= step progress ============================= */
+  .stepper { display: flex; align-items: center; list-style: none; margin: 0; padding: 0; }
+  .stepper-item {
+    flex: none;
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 8px 18px 8px 8px;
+    border-radius: 999px;
+    position: relative;
   }
-  h2 {
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 17px;
-    margin: 0 0 12px;
+  .stepper-item:not(:last-child) { margin-right: 32px; }
+  .stepper-item::after {
+    content: ""; position: absolute; left: 100%; top: 50%; width: 32px; height: 1px;
+    background: var(--line-strong); transform: translateY(-50%);
   }
-  .section-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
+  .stepper-item:last-child::after { display: none; }
+  .stepper-item .num {
+    flex: none; width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+    border: 1.5px solid var(--line-strong);
     color: var(--ink-muted);
-    margin: 0 0 14px;
+    background: var(--surface);
   }
+  .stepper-item .label { font-size: 14px; color: var(--ink-muted); white-space: nowrap; }
+  .stepper-item.current { background: var(--accent-soft); }
+  .stepper-item.current .num { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .stepper-item.current .label { color: var(--accent-ink); font-weight: 600; }
+  .stepper-item.done .num { background: var(--good-soft); border-color: var(--good); color: var(--good-ink); }
+  .stepper-item.done .label { color: var(--ink); }
 
-  /* ---------- net grid geometry (shared look for example/slot/draw nets) ---------- */
+  /* ---------- shared net grid geometry (layout/draw nets) ---------- */
   .net-grid {
     display: grid;
     grid-template-columns: repeat(3, var(--cell));
@@ -129,62 +144,68 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    background: var(--surface-2);
+    background: var(--surface);
   }
 
-  /* ============================= TOP: instructions ============================= */
-  .instr-caption { font-size: 13px; color: var(--ink-muted); max-width: 30em; line-height: 1.5; text-align: center; }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 22px;
+    margin: 0 0 10px;
+  }
+  .instr-caption { font-size: 14px; color: var(--ink-muted); line-height: 1.6; max-width: 34em; }
   .instr-caption b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- two-column step layout: info panel + work panel ---------- */
+  .step { display: none; flex-direction: column; gap: 24px; }
+  .step.active { display: flex; }
+  .step-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+  .panel { border-radius: var(--radius); padding: 36px; border: 1px solid var(--line); }
+  .panel-info { background: var(--surface); }
+  .panel-info .mini-cube-stage { padding-top: 28px; }
+  .panel-work { background: var(--surface-2); display: flex; flex-direction: column; align-items: center; gap: 22px; }
 
   .mini-cube-stage { perspective: 420px; }
   .mini-cube {
-    width: 64px; height: 64px; position: relative;
+    width: 76px; height: 76px; position: relative;
     transform-style: preserve-3d;
     transform: rotateX(-20deg) rotateY(-32deg);
-    margin: 6px auto 0;
+    margin: 20px auto 0;
   }
   .mini-cube .mf {
-    position: absolute; inset: 0; width: 64px; height: 64px;
-    background: var(--surface-2);
+    position: absolute; inset: 0; width: 76px; height: 76px;
+    background: var(--surface-3);
     border: 1px solid var(--line-strong);
   }
-  .mini-cube .mf-front  { transform: translateZ(32px); }
-  .mini-cube .mf-back   { transform: rotateY(180deg) translateZ(32px); }
-  .mini-cube .mf-right  { transform: rotateY(90deg) translateZ(32px); }
-  .mini-cube .mf-left   { transform: rotateY(-90deg) translateZ(32px); }
-  .mini-cube .mf-top    { transform: rotateX(90deg) translateZ(32px); }
-  .mini-cube .mf-bottom { transform: rotateX(-90deg) translateZ(32px); }
-
-  /* ============================= step wizard ============================= */
-  .step { display: none; flex-direction: column; align-items: center; gap: 14px; }
-  .step.active { display: flex; }
-  .step > div:first-child { align-self: stretch; }
+  .mini-cube .mf-front  { transform: translateZ(38px); }
+  .mini-cube .mf-back   { transform: rotateY(180deg) translateZ(38px); }
+  .mini-cube .mf-right  { transform: rotateY(90deg) translateZ(38px); }
+  .mini-cube .mf-left   { transform: rotateY(-90deg) translateZ(38px); }
+  .mini-cube .mf-top    { transform: rotateX(90deg) translateZ(38px); }
+  .mini-cube .mf-bottom { transform: rotateX(-90deg) translateZ(38px); }
 
   .nav-btn {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 10px 18px;
+    padding: 12px 22px;
     border-radius: 999px;
     border: 1px solid var(--line-strong);
     background: var(--surface);
     color: var(--ink);
     font-weight: 600;
-    font-size: 13.5px;
+    font-size: 14px;
     cursor: pointer;
   }
+  .nav-btn:hover { background: var(--surface-2); }
   .nav-btn-primary {
-    border-color: var(--accent-strong);
+    border-color: var(--accent);
     background: var(--accent);
-    color: #fff;
+    color: var(--on-accent);
   }
-  .nav-btn-primary:hover { background: var(--accent-strong); }
-  .nav-btn:disabled {
-    opacity: .45;
-    cursor: not-allowed;
-  }
+  .nav-btn-primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+  .nav-btn:disabled { opacity: .45; cursor: not-allowed; }
   .nav-btn:disabled:hover { background: var(--accent); }
 
   /* ---------- Step 1: free-form layout picker ---------- */
-  .layout-area { display: flex; flex-direction: column; gap: 16px; align-items: center; }
   .slot {
     border: 2px dashed var(--line-strong);
     background: transparent;
@@ -196,9 +217,9 @@
   .tray {
     display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
     min-height: calc(var(--cell) + 12px);
-    padding: 10px;
-    border-radius: 10px;
-    background: var(--surface-2);
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-3);
     width: 100%;
   }
   .tile {
@@ -206,56 +227,56 @@
     border-radius: 8px;
     background: var(--surface);
     border: 1px solid var(--line-strong);
-    box-shadow: var(--shadow);
     display: flex; align-items: center; justify-content: center;
     cursor: grab;
     touch-action: none;
     user-select: none;
     font-family: var(--font-display);
-    font-size: 13px;
+    font-size: 14px;
     color: var(--ink);
   }
-  .tile.dragging { cursor: grabbing; box-shadow: 0 10px 26px -8px rgba(0,0,0,.35); z-index: 50; }
-  .tile.in-slot { box-shadow: none; border-radius: 0; width: 100%; height: 100%; }
+  .tile.dragging { cursor: grabbing; box-shadow: 0 10px 26px -8px rgba(0,0,0,.35); z-index: 50; } /* taste-skill-ignore: a tile mid-drag is a real floating overlay, not a resting card */
+  .tile.in-slot { box-shadow: none; border-radius: 0; width: 100%; height: 100%; } /* taste-skill-ignore: resets the dragging shadow back to none */
 
   .layout-status {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--ink-muted);
     text-align: center;
     min-height: 1.3em;
   }
   .layout-status.complete { color: var(--good-ink); font-weight: 600; }
 
-  .toolbar {
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  }
+  /* ---------- Step 2: toolbar + draw net ---------- */
+  .toolbar { display: flex; flex-direction: column; gap: 16px; }
+  .toolbar-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .tool-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 7px 12px;
-    border-radius: 8px;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
     border: 1px solid var(--line-strong);
     background: var(--surface);
     color: var(--ink);
     cursor: pointer;
-    font-size: 13px;
+    font-size: 14px;
   }
-  .tool-btn.active { background: var(--accent); border-color: var(--accent-strong); color: #fff; }
+  .tool-btn.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .tool-icon { width: 15px; height: 15px; flex: none; }
   .swatch-btn {
-    width: 22px; height: 22px; border-radius: 50%;
+    width: 26px; height: 26px; border-radius: 50%;
     border: 2px solid var(--surface);
-    box-shadow: 0 0 0 1px var(--line-strong);
+    box-shadow: 0 0 0 1px var(--line-strong); /* taste-skill-ignore: zero-blur ring, a crisp outline not an elevation shadow */
     cursor: pointer; padding: 0;
   }
-  .swatch-btn.active { box-shadow: 0 0 0 2px var(--accent-strong); }
-  .toolbar .sep { width: 1px; align-self: stretch; background: var(--line); margin: 0 2px; }
-  .toolbar label.size-label { font-size: 12px; color: var(--ink-muted); display: flex; align-items: center; gap: 6px; }
+  .swatch-btn.active { box-shadow: 0 0 0 2px var(--accent-strong); } /* taste-skill-ignore: same ring technique, selected state */
+  .size-label { font-size: 13px; color: var(--ink-muted); display: flex; align-items: center; gap: 8px; }
 
   .draw-net { display: grid; grid-template-columns: repeat(3, var(--cell)); grid-template-rows: repeat(4, var(--cell)); justify-content: center; }
-  .draw-net .net-cell-base { padding: 0; overflow: hidden; }
+  .draw-net .net-cell-base { padding: 0; overflow: hidden; background: var(--surface); }
   .draw-net canvas { width: 100%; height: 100%; touch-action: none; display: block; }
 
-  /* ============================= STEP 2: 3D stage ============================= */
-  .stage3d-wrap { perspective: 900px; padding: 20px 0; }
+  /* ============================= Step 3: 3D stage ============================= */
+  .panel-stage { background: var(--surface-2); display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+  .stage3d-wrap { perspective: 900px; padding: 24px 0; }
   .cube3d {
     width: var(--cube); height: var(--cube);
     position: relative;
@@ -268,7 +289,7 @@
   .face {
     position: absolute; inset: 0;
     width: var(--cube); height: var(--cube);
-    background: var(--surface-2);
+    background: var(--surface-3);
     border: 1px solid var(--line-strong);
     backface-visibility: hidden;
     overflow: hidden;
@@ -281,23 +302,28 @@
   .face-top    { transform: rotateX(90deg) translateZ(calc(var(--cube) / 2)); }
   .face-bottom { transform: rotateX(-90deg) translateZ(calc(var(--cube) / 2)); }
 
-  .stage-actions { display: flex; align-items: center; gap: 10px; }
+  .stage-actions { display: flex; align-items: center; justify-content: center; gap: 10px; }
   .reset-btn {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 10px 18px;
+    padding: 12px 22px;
     border-radius: 999px;
-    border: 1px solid var(--accent-strong);
+    border: 1px solid var(--accent);
     background: var(--accent);
-    color: #fff;
+    color: var(--on-accent);
     font-weight: 600;
-    font-size: 13.5px;
+    font-size: 14px;
     cursor: pointer;
   }
-  .reset-btn:hover { background: var(--accent-strong); }
-  .stage-hint { font-size: 12.5px; color: var(--ink-muted); }
+  .reset-btn:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+  .stage-hint { font-size: 13px; color: var(--ink-muted); margin: 0 0 4px; }
 
-  @media (max-width: 820px) {
-    :root { --cell: 62px; --cube: 160px; }
+  @media (max-width: 900px) {
+    .step-grid { grid-template-columns: 1fr; }
+    .stepper-item .label { display: none; }
+  }
+  @media (max-width: 640px) {
+    :root { --cell: 62px; --cube: 180px; }
+    .panel { padding: 20px; }
   }
 </style>
 </head>
@@ -309,50 +335,69 @@
     <p>วาดลวดลายลงในโครงข่าย แล้วดูผลลัพธ์เป็นลูกเต๋าสามมิติที่หมุนได้</p>
   </header>
 
+  <ol class="stepper" id="stepperNav">
+    <li class="stepper-item current" data-step="1"><span class="num">1</span><span class="label">จัดวาง</span></li>
+    <li class="stepper-item" data-step="2"><span class="num">2</span><span class="label">วาดลาย</span></li>
+    <li class="stepper-item" data-step="3"><span class="num">3</span><span class="label">พับ 3 มิติ</span></li>
+  </ol>
+
   <!-- ============================= STEP 1: layout ============================= -->
-  <section class="card step active" id="stepLayout" data-step="1">
-    <div>
-      <p class="section-label">ขั้นที่ 1 จาก 3</p>
-      <h2>จัดวางโครงข่าย</h2>
-      <p class="instr-caption">ลากแต่ละด้านไปวางตำแหน่งที่ต้องการ จะวางแบบไหนก็ได้ ไม่มีผิดไม่มีถูก แล้วจะได้ลูกเต๋าสามมิติแบบนี้</p>
-      <div class="mini-cube-stage" aria-hidden="true">
-        <div class="mini-cube">
-          <div class="mf mf-front"></div><div class="mf mf-back"></div>
-          <div class="mf mf-right"></div><div class="mf mf-left"></div>
-          <div class="mf mf-top"></div><div class="mf mf-bottom"></div>
+  <section class="step active" id="stepLayout" data-step="1">
+    <div class="step-grid">
+      <div class="panel panel-info">
+        <h2>จัดวางโครงข่าย</h2>
+        <p class="instr-caption">ลากแต่ละด้านไปวางตำแหน่งที่ต้องการ จะวางแบบไหนก็ได้ ไม่มีผิดไม่มีถูก แล้วจะได้ลูกเต๋าสามมิติแบบนี้</p>
+        <div class="mini-cube-stage" aria-hidden="true">
+          <div class="mini-cube">
+            <div class="mf mf-front"></div><div class="mf mf-back"></div>
+            <div class="mf mf-right"></div><div class="mf mf-left"></div>
+            <div class="mf mf-top"></div><div class="mf mf-bottom"></div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="layout-area">
-      <div class="net-grid" id="slotGrid"></div>
-      <div class="tray" id="tileTray"></div>
-      <p class="layout-status" id="layoutStatus">ลากชิ้นส่วนทั้ง 6 ไปวางตำแหน่งใดก็ได้ในตาราง</p>
+      <div class="panel panel-work">
+        <div class="net-grid" id="slotGrid"></div>
+        <div class="tray" id="tileTray"></div>
+        <p class="layout-status" id="layoutStatus">ลากชิ้นส่วนทั้ง 6 ไปวางตำแหน่งใดก็ได้ในตาราง</p>
+      </div>
     </div>
     <button class="nav-btn nav-btn-primary" id="toDrawBtn" type="button" disabled>ถัดไป: วาดลงในโครงข่าย →</button>
   </section>
 
   <!-- ============================= STEP 2: draw ============================= -->
-  <section class="card step" id="stepDraw" data-step="2">
-    <div>
-      <p class="section-label">ขั้นที่ 2 จาก 3</p>
-      <h2>วาดลงในโครงข่าย</h2>
-      <p class="section-label">วาดอิสระด้วยปากกา หรือลบด้วยยางลบ</p>
+  <section class="step" id="stepDraw" data-step="2">
+    <div class="step-grid">
+      <div class="panel panel-info">
+        <h2>วาดลงในโครงข่าย</h2>
+        <p class="instr-caption">วาดอิสระด้วยปากกา หรือลบด้วยยางลบ วาดครบ 6 ด้านแล้วไปดูผลลัพธ์สามมิติได้เลย</p>
+        <div class="toolbar">
+          <div class="toolbar-row">
+            <button class="tool-btn active" id="penTool" type="button">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+              ปากกา
+            </button>
+            <button class="tool-btn" id="eraserTool" type="button">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16c-1-1-1-2 0-3l10-10c1-1 2-1 3 0l6 6c1 1 1 2 0 3L12 20"/><path d="M6 11l7 7"/></svg>
+              ยางลบ
+            </button>
+          </div>
+          <div class="toolbar-row">
+            <button class="swatch-btn active" data-color="#D33A2C" style="background:#D33A2C" title="แดง" type="button"></button>
+            <button class="swatch-btn" data-color="#1B2733" style="background:#1B2733" title="ดำ" type="button"></button>
+            <button class="swatch-btn" data-color="#E2672B" style="background:#E2672B" title="ส้ม" type="button"></button>
+            <button class="swatch-btn" data-color="#2E7DD6" style="background:#2E7DD6" title="ฟ้า" type="button"></button>
+            <button class="swatch-btn" data-color="#2E9563" style="background:#2E9563" title="เขียว" type="button"></button>
+          </div>
+          <div class="toolbar-row">
+            <label class="size-label" for="brushSize">ขนาดหัวปากกา</label>
+            <input type="range" id="brushSize" min="2" max="14" value="4">
+          </div>
+        </div>
+      </div>
+      <div class="panel panel-work">
+        <div class="net-grid draw-net" id="drawNet"></div>
+      </div>
     </div>
-    <div class="toolbar">
-      <button class="tool-btn active" id="penTool" type="button">✏️ ปากกา</button>
-      <button class="tool-btn" id="eraserTool" type="button">🧹 ยางลบ</button>
-      <span class="sep"></span>
-      <button class="swatch-btn active" data-color="#D33A2C" style="background:#D33A2C" title="แดง" type="button"></button>
-      <button class="swatch-btn" data-color="#1B2733" style="background:#1B2733" title="ดำ" type="button"></button>
-      <button class="swatch-btn" data-color="#E2672B" style="background:#E2672B" title="ส้ม" type="button"></button>
-      <button class="swatch-btn" data-color="#2E7DD6" style="background:#2E7DD6" title="ฟ้า" type="button"></button>
-      <button class="swatch-btn" data-color="#2E9563" style="background:#2E9563" title="เขียว" type="button"></button>
-      <span class="sep"></span>
-      <label class="size-label">ขนาดหัวปากกา
-        <input type="range" id="brushSize" min="2" max="14" value="4">
-      </label>
-    </div>
-    <div class="net-grid draw-net" id="drawNet"></div>
     <div class="stage-actions">
       <button class="nav-btn" id="toLayoutBtn" type="button">← กลับไปจัดตำแหน่ง</button>
       <button class="nav-btn nav-btn-primary" id="toResultBtn" type="button">ดูผลลัพธ์ 3 มิติ →</button>
@@ -360,20 +405,19 @@
   </section>
 
   <!-- ============================= STEP 3: 3D result ============================= -->
-  <section class="card step" id="stepResult" data-step="3">
-    <div>
-      <p class="section-label">ขั้นที่ 3 จาก 3</p>
+  <section class="step" id="stepResult" data-step="3">
+    <div class="panel panel-stage">
       <h2>โมเดลสามมิติ</h2>
       <p class="stage-hint">ลากด้วยเมาส์หรือนิ้วเพื่อหมุนดูรอบด้าน</p>
-    </div>
-    <div class="stage3d-wrap">
-      <div class="cube3d" id="cube3d">
-        <div class="face face-front"><canvas data-face="front"></canvas></div>
-        <div class="face face-back"><canvas data-face="back"></canvas></div>
-        <div class="face face-right"><canvas data-face="right"></canvas></div>
-        <div class="face face-left"><canvas data-face="left"></canvas></div>
-        <div class="face face-top"><canvas data-face="top"></canvas></div>
-        <div class="face face-bottom"><canvas data-face="bottom"></canvas></div>
+      <div class="stage3d-wrap">
+        <div class="cube3d" id="cube3d">
+          <div class="face face-front"><canvas data-face="front"></canvas></div>
+          <div class="face face-back"><canvas data-face="back"></canvas></div>
+          <div class="face face-right"><canvas data-face="right"></canvas></div>
+          <div class="face face-left"><canvas data-face="left"></canvas></div>
+          <div class="face face-top"><canvas data-face="top"></canvas></div>
+          <div class="face face-bottom"><canvas data-face="bottom"></canvas></div>
+        </div>
       </div>
     </div>
     <div class="stage-actions">
@@ -713,7 +757,7 @@
   /* ---------------------------------------------------------------------
      Reset
      --------------------------------------------------------------------- */
-  function wireReset() {
+  function wireReset(goToStep) {
     document.getElementById("resetBtn").addEventListener("click", () => {
       FACES.forEach(face => {
         const dpr = window.devicePixelRatio || 1;
@@ -725,6 +769,9 @@
           ctx.restore();
         });
       });
+      // Resetting clears the drawing, so send the user back to Step 2 to
+      // draw again rather than leaving them staring at a now-blank cube.
+      goToStep(2);
     });
   }
 
@@ -735,10 +782,17 @@
     const stepLayout = document.getElementById("stepLayout");
     const stepDraw = document.getElementById("stepDraw");
     const stepResult = document.getElementById("stepResult");
+    const stepperItems = Array.from(document.querySelectorAll(".stepper-item"));
+
     function goToStep(n) {
       stepLayout.classList.toggle("active", n === 1);
       stepDraw.classList.toggle("active", n === 2);
       stepResult.classList.toggle("active", n === 3);
+      stepperItems.forEach(li => {
+        const s = Number(li.dataset.step);
+        li.classList.toggle("current", s === n);
+        li.classList.toggle("done", s < n);
+      });
     }
     document.getElementById("toDrawBtn").addEventListener("click", () => {
       buildDrawNet();
@@ -748,13 +802,14 @@
     document.getElementById("toLayoutBtn").addEventListener("click", () => goToStep(1));
     document.getElementById("toResultBtn").addEventListener("click", () => goToStep(3));
     document.getElementById("backToDrawBtn").addEventListener("click", () => goToStep(2));
+    return goToStep;
   }
 
   buildLayoutPicker();
   wireToolbar();
   wireCubeRotation();
-  wireReset();
-  wireSteps();
+  const goToStep = wireSteps();
+  wireReset(goToStep);
   syncLoop();
 })();
 </script>
